@@ -71,6 +71,39 @@ public class AdmsWorkflow {
         precheckResult = new PrecheckResult(precheckResponse, status, message);
     }
 
+    /**
+     * Executes the workflow using pre-built SOAP envelopes for CreateSchedule/CreateOperation.
+     *
+     * <p>The operation payload can include a {@code ${scheduleId}} placeholder that is replaced
+     * with the ID extracted from the CreateSchedule response.</p>
+     */
+    public void executeWithPayloads(String createScheduleEnvelope,
+                                    String createOperationEnvelopeTemplate,
+                                    String deviceId) throws IOException {
+
+        String createScheduleResponse = client.createScheduleFromEnvelope(createScheduleEnvelope);
+        String scheduleId = client.extractElement(createScheduleResponse, "scheduleId");
+        if (scheduleId == null || scheduleId.isBlank()) {
+            throw new IllegalStateException(
+                    "CreateSchedule did not return a scheduleId. Response: " + createScheduleResponse);
+        }
+        scheduleResult = new ScheduleResult(createScheduleResponse, scheduleId);
+
+        String createOperationEnvelope = createOperationEnvelopeTemplate.replace("${scheduleId}", scheduleId);
+        String createOperationResponse = client.createOperationFromEnvelope(createOperationEnvelope);
+        String operationId = client.extractElement(createOperationResponse, "operationId");
+        if (operationId == null || operationId.isBlank()) {
+            throw new IllegalStateException(
+                    "CreateOperation did not return an operationId. Response: " + createOperationResponse);
+        }
+        operationResult = new OperationResult(createOperationResponse, operationId);
+
+        String precheckResponse = client.precheckPlannedOrder(operationId, deviceId);
+        String status  = client.extractElement(precheckResponse, "status");
+        String message = client.extractElement(precheckResponse, "message");
+        precheckResult = new PrecheckResult(precheckResponse, status, message);
+    }
+
     // ---- Result accessors ----
 
     /** Returns the result of Step 1 (CreateSchedule), or {@code null} if not yet executed. */

@@ -1,10 +1,12 @@
-package com.atheor.e2e.adms;
+package com.atheor.e2e.specs.adms;
 
 import com.atheor.e2e.adms.client.AdmsSoapClient;
 import com.atheor.e2e.adms.model.OperationResult;
 import com.atheor.e2e.adms.model.PrecheckResult;
 import com.atheor.e2e.adms.model.ScheduleResult;
 import com.atheor.e2e.adms.workflow.AdmsWorkflow;
+import com.atheor.framework.config.ConfigManager;
+import com.atheor.framework.payload.PayloadFileLoader;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,13 +22,23 @@ class AdmsWorkflowTest {
         AdmsSoapClient client = new AdmsSoapClient();
         workflow = new AdmsWorkflow(client);
 
-        workflow.execute(
-                "Test Schedule",
-                "2026-04-14T08:00:00",
-                "2026-04-14T17:00:00",
-                "Test Operation",
-                "DEVICE-001"
-        );
+        String createSchedulePayload = PayloadFileLoader.fromClasspath("payloads/adms/create_schedule.xml")
+                .with("username", ConfigManager.get("adms.username", "adms_user"))
+                .with("password", ConfigManager.get("adms.password", "adms_password"))
+                .with("scheduleName", "Test Schedule")
+                .with("startDate", "2026-04-14T08:00:00")
+                .with("endDate", "2026-04-14T17:00:00")
+                .build();
+
+        String createOperationPayloadTemplate = PayloadFileLoader.fromClasspath("payloads/adms/create_operation.xml")
+                .with("username", ConfigManager.get("adms.username", "adms_user"))
+                .with("password", ConfigManager.get("adms.password", "adms_password"))
+                .withRaw("scheduleId", "${scheduleId}")
+                .with("operationName", "Test Operation")
+                .with("deviceId", "DEVICE-001")
+                .build();
+
+        workflow.executeWithPayloads(createSchedulePayload, createOperationPayloadTemplate, "DEVICE-001");
     }
 
     // ---- Step 1: Create Schedule ----

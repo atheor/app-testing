@@ -1,6 +1,7 @@
-package com.atheor.e2e.countryinfo.contract;
+package com.atheor.e2e.specs.countryinfo.contract;
 
 import com.atheor.e2e.countryinfo.client.CountryInfoSoapClient;
+import com.atheor.e2e.countryinfo.workflow.CountryInfoWorkflow;
 import com.atheor.framework.soap.XsdValidator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -27,12 +28,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("CountryInfoService — XSD Contract Tests")
 class CountryInfoContractTest {
 
-    private static CountryInfoSoapClient client;
+    private static CountryInfoWorkflow workflow;
     private static XsdValidator validator;
 
     @BeforeAll
     static void setUp() {
-        client = new CountryInfoSoapClient();
+        workflow = new CountryInfoWorkflow(new CountryInfoSoapClient());
         validator = new XsdValidator("schemas/CountryInfoService.xsd");
     }
 
@@ -40,7 +41,7 @@ class CountryInfoContractTest {
     @ValueSource(strings = {"IT", "US", "DE"})
     @DisplayName("FullCountryInfo response conforms to XSD contract")
     void fullCountryInfoResponseConformsToContract(String isoCode) throws IOException {
-        String response = client.getFullCountryInfo(isoCode);
+        String response = workflow.requestFullCountryInfo(isoCode);
         assertNotNull(response, "Response must not be null");
 
         // Extract the Body payload from the SOAP envelope for XSD validation
@@ -52,7 +53,7 @@ class CountryInfoContractTest {
     @Test
     @DisplayName("ListOfCountryNamesByName response conforms to XSD contract")
     void listOfCountryNamesByNameConformsToContract() throws IOException {
-        String response = client.listOfCountryNamesByName();
+        String response = workflow.requestCountryNamesList();
         assertNotNull(response, "Response must not be null");
 
         String payload = extractSoapBodyPayload(response);

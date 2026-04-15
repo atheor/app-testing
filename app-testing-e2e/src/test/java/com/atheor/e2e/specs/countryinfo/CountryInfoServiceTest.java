@@ -1,6 +1,7 @@
-package com.atheor.e2e.countryinfo;
+package com.atheor.e2e.specs.countryinfo;
 
 import com.atheor.e2e.countryinfo.client.CountryInfoSoapClient;
+import com.atheor.e2e.countryinfo.workflow.CountryInfoWorkflow;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -13,11 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CountryInfoServiceTest {
 
-    private static CountryInfoSoapClient client;
+        private static CountryInfoWorkflow workflow;
 
     @BeforeAll
     static void setUp() {
-        client = new CountryInfoSoapClient();
+                workflow = new CountryInfoWorkflow(new CountryInfoSoapClient());
     }
 
     // ---- FullCountryInfo ----
@@ -33,7 +34,7 @@ class CountryInfoServiceTest {
     @Order(1)
     @DisplayName("FullCountryInfo returns correct country name for known ISO codes")
     void fullCountryInfoReturnsCountryName(String isoCode, String expectedName) throws IOException {
-        String response = client.getFullCountryInfo(isoCode);
+                String response = workflow.requestFullCountryInfo(isoCode);
 
         assertNotNull(response, "Response must not be null for ISO code: " + isoCode);
         assertFalse(response.isBlank(), "Response must not be blank for ISO code: " + isoCode);
@@ -45,7 +46,7 @@ class CountryInfoServiceTest {
     @Order(2)
     @DisplayName("FullCountryInfo for Italy contains capital city Rome")
     void fullCountryInfoItalyContainsCapitalRome() throws IOException {
-        String response = client.getFullCountryInfo("IT");
+        String response = workflow.requestFullCountryInfo("IT");
         assertTrue(response.contains("Rome") || response.contains("Roma"),
                 "Expected capital city Rome/Roma in response: " + response);
     }
@@ -54,7 +55,7 @@ class CountryInfoServiceTest {
     @Order(3)
     @DisplayName("FullCountryInfo for Italy contains phone code 39")
     void fullCountryInfoItalyContainsPhoneCode() throws IOException {
-        String response = client.getFullCountryInfo("IT");
+        String response = workflow.requestFullCountryInfo("IT");
         assertTrue(response.contains("39"),
                 "Expected phone code '39' for Italy in response: " + response);
     }
@@ -63,7 +64,7 @@ class CountryInfoServiceTest {
     @Order(4)
     @DisplayName("FullCountryInfo response is a valid SOAP envelope")
     void fullCountryInfoResponseIsValidSoapEnvelope() throws IOException {
-        String response = client.getFullCountryInfo("US");
+        String response = workflow.requestFullCountryInfo("US");
         assertTrue(response.contains("Envelope"),
                 "Response does not appear to be a SOAP envelope: " + response);
         assertTrue(response.contains("Body"),
@@ -76,7 +77,7 @@ class CountryInfoServiceTest {
     @Order(5)
     @DisplayName("ListOfCountryNamesByName returns a non-empty list")
     void listOfCountryNamesByNameIsNotEmpty() throws IOException {
-        String response = client.listOfCountryNamesByName();
+        String response = workflow.requestCountryNamesList();
         assertNotNull(response, "Response must not be null");
         assertFalse(response.isBlank(), "Response must not be blank");
         assertTrue(response.contains("tCountryCodeAndName"),
@@ -87,7 +88,7 @@ class CountryInfoServiceTest {
     @Order(6)
     @DisplayName("ListOfCountryNamesByName contains well-known countries")
     void listOfCountryNamesByNameContainsKnownCountries() throws IOException {
-        String response = client.listOfCountryNamesByName();
+        String response = workflow.requestCountryNamesList();
         assertAll("Well-known countries must be present",
                 () -> assertTrue(response.contains("Italy"),   "Missing Italy"),
                 () -> assertTrue(response.contains("Germany"), "Missing Germany"),
@@ -107,7 +108,7 @@ class CountryInfoServiceTest {
     @Order(7)
     @DisplayName("CountryName returns correct name for known codes")
     void countryNameReturnsCorrectName(String isoCode, String expectedName) throws IOException {
-        String response = client.getCountryName(isoCode);
+        String response = workflow.requestCountryName(isoCode);
         assertTrue(response.contains(expectedName),
                 "Expected '" + expectedName + "' for ISO code '" + isoCode + "'. Actual: " + response);
     }

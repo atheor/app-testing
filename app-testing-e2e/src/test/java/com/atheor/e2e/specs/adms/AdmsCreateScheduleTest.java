@@ -1,4 +1,4 @@
-package com.atheor.e2e.adms;
+package com.atheor.e2e.specs.adms;
 
 import com.atheor.e2e.adms.client.AdmsSoapClient;
 import com.atheor.e2e.adms.model.OperationResult;

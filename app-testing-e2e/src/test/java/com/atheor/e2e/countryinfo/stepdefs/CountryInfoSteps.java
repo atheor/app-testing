@@ -1,6 +1,7 @@
 package com.atheor.e2e.countryinfo.stepdefs;
 
 import com.atheor.e2e.countryinfo.client.CountryInfoSoapClient;
+import com.atheor.e2e.countryinfo.workflow.CountryInfoWorkflow;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -10,7 +11,7 @@ import java.io.IOException;
 
 public class CountryInfoSteps {
 
-    private final CountryInfoSoapClient client = new CountryInfoSoapClient();
+    private final CountryInfoWorkflow workflow = new CountryInfoWorkflow(new CountryInfoSoapClient());
 
     private String lastResponse;
 
@@ -22,12 +23,12 @@ public class CountryInfoSteps {
 
     @When("I request full country info for ISO code {string}")
     public void iRequestFullCountryInfoForIsoCode(String isoCode) throws IOException {
-        lastResponse = client.getFullCountryInfo(isoCode);
+        lastResponse = workflow.requestFullCountryInfo(isoCode);
     }
 
     @When("I request the list of country names")
     public void iRequestTheListOfCountryNames() throws IOException {
-        lastResponse = client.listOfCountryNamesByName();
+        lastResponse = workflow.requestCountryNamesList();
     }
 
     @Then("the response should contain {string}")

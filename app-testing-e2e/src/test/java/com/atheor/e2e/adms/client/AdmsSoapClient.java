@@ -98,11 +98,32 @@ public class AdmsSoapClient {
         return new SoapClient(NAMESPACE + "/PrecheckPlannedOrder").sendRequest(endpoint, envelope);
     }
 
+    /**
+     * Sends a fully assembled {@code CreateSchedule} SOAP envelope.
+     */
+    public String createScheduleFromEnvelope(String envelope) throws IOException {
+        return new SoapClient(NAMESPACE + "/CreateSchedule").sendRequest(endpoint, envelope);
+    }
+
+    /**
+     * Sends a fully assembled {@code CreateOperation} SOAP envelope.
+     */
+    public String createOperationFromEnvelope(String envelope) throws IOException {
+        return new SoapClient(NAMESPACE + "/CreateOperation").sendRequest(endpoint, envelope);
+    }
+
+    /**
+     * Sends a fully assembled {@code PrecheckPlannedOrder} SOAP envelope.
+     */
+    public String precheckPlannedOrderFromEnvelope(String envelope) throws IOException {
+        return new SoapClient(NAMESPACE + "/PrecheckPlannedOrder").sendRequest(endpoint, envelope);
+    }
+
     // ---- SoapPayloadSource overloads ----
 
     /**
      * Sends a {@code CreateSchedule} request using a pre-built {@link SoapPayloadSource}.
-     * Use {@link com.atheor.e2e.adms.payload.FilePayloadLoader} or
+      * Use {@link com.atheor.framework.payload.PayloadFileLoader} or
      * {@link com.atheor.e2e.adms.payload.CreateSchedulePayload} to create the payload.
      *
      * @param payload the fully assembled SOAP envelope source
@@ -114,7 +135,7 @@ public class AdmsSoapClient {
 
     /**
      * Sends a {@code CreateOperation} request using a pre-built {@link SoapPayloadSource}.
-     * Use {@link com.atheor.e2e.adms.payload.FilePayloadLoader} or
+      * Use {@link com.atheor.framework.payload.PayloadFileLoader} or
      * {@link com.atheor.e2e.adms.payload.CreateOperationPayload} to create the payload.
      *
      * @param payload the fully assembled SOAP envelope source

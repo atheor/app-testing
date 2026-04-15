@@ -5,7 +5,7 @@ package com.atheor.e2e.adms.payload;
  *
  * <p>Two built-in implementations are provided:
  * <ul>
- *   <li>{@link FilePayloadLoader} — loads a full SOAP envelope from an XML template file on the
+ *   <li>{@link com.atheor.framework.payload.PayloadFileLoader} — loads a full SOAP envelope from an XML template file on the
  *       classpath and substitutes {@code ${token}} placeholders with supplied values.</li>
  *   <li>{@link CreateSchedulePayload} / {@link CreateOperationPayload} — fluent builders that
  *       construct the envelope programmatically from typed fields.</li>
