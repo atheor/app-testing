@@ -2,20 +2,13 @@ package com.atheor.e2e.workflow;
 
 import com.atheor.e2e.service.InboundSoapServiceClient;
 import com.atheor.framework.payload.PayloadFileLoader;
-import org.w3c.dom.Document;
-
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import com.atheor.framework.soap.XmlValueExtractor;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,6 +41,19 @@ public class CreateScheduleOperationWorkflow {
         LocalDateTime start = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(1);
         LocalDateTime end = start.plusHours(2);
 
+        ScheduleResult scheduleResult = createSchedule(correlation, start, end);
+        OperationResult operationResult = createOperation(correlation, scheduleResult.scheduleId());
+
+        return new WorkflowResult(
+            scheduleResult.scheduleId(),
+            operationResult.operationId(),
+            scheduleResult.responseXml(),
+            operationResult.responseXml());
+        }
+
+        private ScheduleResult createSchedule(String correlation,
+                          LocalDateTime start,
+                          LocalDateTime end) throws Exception {
         String schedulePayload = PayloadFileLoader
                 .fromClasspath("payloads/adms/create_schedule.xml")
                 .with("username", username)
@@ -60,10 +66,13 @@ public class CreateScheduleOperationWorkflow {
         String createScheduleResponse = soapServiceClient.createSchedule(schedulePayload);
         assertHasSoapResponse(createScheduleResponse, "CreateSchedule");
 
-        String scheduleId = extractValueByLocalName(createScheduleResponse, "scheduleId");
-        assertNotNull(scheduleId, "CreateSchedule response must contain scheduleId");
-        assertFalse(scheduleId.isBlank(), "CreateSchedule response returned empty scheduleId");
+        String scheduleId = getResponsePropertyValue(createScheduleResponse, "scheduleId", "CreateSchedule");
 
+        return new ScheduleResult(scheduleId, createScheduleResponse);
+        }
+
+        private OperationResult createOperation(String correlation,
+                            String scheduleId) throws Exception {
         String operationPayload = PayloadFileLoader
                 .fromClasspath("payloads/adms/create_operation.xml")
                 .with("username", username)
@@ -76,18 +85,16 @@ public class CreateScheduleOperationWorkflow {
         String createOperationResponse = soapServiceClient.createOperation(operationPayload);
         assertHasSoapResponse(createOperationResponse, "CreateOperation");
 
-        String operationId = extractValueByLocalName(createOperationResponse, "operationId");
-        assertNotNull(operationId, "CreateOperation response must contain operationId");
-        assertFalse(operationId.isBlank(), "CreateOperation response returned empty operationId");
+        String operationId = getResponsePropertyValue(createOperationResponse, "operationId", "CreateOperation");
 
-        return new WorkflowResult(scheduleId, operationId, createScheduleResponse, createOperationResponse);
+        return new OperationResult(operationId, createOperationResponse);
     }
 
     private void assertHasSoapResponse(String responseXml, String operationName) throws Exception {
         assertNotNull(responseXml, operationName + " returned null response");
         assertFalse(responseXml.isBlank(), operationName + " returned empty response");
 
-        String faultString = extractValueByLocalName(responseXml, "faultstring");
+        String faultString = XmlValueExtractor.extractValueByLocalName(responseXml, "faultstring");
         if (faultString != null && !faultString.isBlank()) {
             fail(operationName + " returned SOAP Fault: " + faultString);
         }
@@ -95,23 +102,28 @@ public class CreateScheduleOperationWorkflow {
         assertTrue(responseXml.contains("Envelope"), operationName + " response is not a SOAP envelope");
     }
 
-    private String extractValueByLocalName(String xml, String localName) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    public String getResponsePropertyValue(String responseXml,
+                                           String propertyLocalName,
+                                           String operationName) throws Exception {
+        String propertyValue = XmlValueExtractor.extractValueByLocalName(responseXml, propertyLocalName);
+        assertNotNull(propertyValue, operationName + " response must contain " + propertyLocalName);
+        assertFalse(propertyValue.isBlank(), operationName + " response returned empty " + propertyLocalName);
+        return propertyValue;
+    }
 
-        Document document = factory.newDocumentBuilder().parse(
-                new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    public void assertResponsePropertyValue(String responseXml,
+                                            String propertyLocalName,
+                                            String expectedValue,
+                                            String operationName) throws Exception {
+        String actualValue = getResponsePropertyValue(responseXml, propertyLocalName, operationName);
+        assertEquals(expectedValue, actualValue,
+                operationName + " response " + propertyLocalName + " does not match expected value");
+    }
 
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        String expression = "//*[local-name()='" + localName + "']/text()";
-        String value = (String) xPath.compile(expression).evaluate(document, XPathConstants.STRING);
+    private record ScheduleResult(String scheduleId, String responseXml) {
+    }
 
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
+    private record OperationResult(String operationId, String responseXml) {
     }
 
     public record WorkflowResult(String scheduleId,
