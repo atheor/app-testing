@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://atheor.com/schedule"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             targetNamespace="http://atheor.com/schedule"
+             name="ScheduleService">
+
+    <types>
+        <xsd:schema>
+            <xsd:import namespace="http://atheor.com/schedule"
+                        schemaLocation="schedule-service.xsd"/>
+        </xsd:schema>
+    </types>
+
+    <!-- Messages -->
+    <message name="CreateScheduleInput">
+        <part name="parameters" element="tns:CreateScheduleRequest"/>
+    </message>
+    <message name="CreateScheduleOutput">
+        <part name="parameters" element="tns:CreateScheduleResponse"/>
+    </message>
+
+    <!-- Port type (abstract interface) -->
+    <portType name="ScheduleServicePortType">
+        <operation name="createSchedule">
+            <input  message="tns:CreateScheduleInput"/>
+            <output message="tns:CreateScheduleOutput"/>
+        </operation>
+    </portType>
+
+    <!-- Binding (SOAP 1.1, document/literal) -->
+    <binding name="ScheduleServiceSoapBinding" type="tns:ScheduleServicePortType">
+        <soap:binding style="document"
+                      transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="createSchedule">
+            <soap:operation soapAction="http://atheor.com/schedule/createSchedule"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+
+    <!-- Service -->
+    <service name="ScheduleService">
+        <port name="ScheduleServicePort"
+              binding="tns:ScheduleServiceSoapBinding">
+            <!-- Actual URL is managed via API Gateway / LocalStack -->
+            <soap:address location="https://api.atheor.com/soap/schedule"/>
+        </port>
+    </service>
+
+</definitions>

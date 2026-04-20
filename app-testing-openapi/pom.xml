@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.atheor</groupId>
+        <artifactId>app-testing</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>app-testing-openapi</artifactId>
+    <packaging>jar</packaging>
+    <name>app-testing-openapi</name>
+    <description>
+        OpenAPI 3.0 specification for the HTTP/REST facade exposed by API Gateway
+        in front of the SOAP ScheduleService Lambda.
+    </description>
+
+    <!-- No Java source — this module is a specification-only artifact -->
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+    </build>
+</project>

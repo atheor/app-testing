@@ -1,0 +1,145 @@
+openapi: "3.0.3"
+info:
+  title: ScheduleService SOAP-over-HTTP API
+  version: "1.0.0"
+  description: |
+    HTTP/REST facade exposed by **AWS API Gateway** in front of the Inbound Lambda.
+
+    The Lambda accepts a **SOAP 1.1** envelope in the request body and returns
+    a SOAP 1.1 envelope in the response body.  The `Content-Type` for both
+    directions is `text/xml; charset=utf-8`.
+
+    ### End-to-end flow
+    ```
+    Client ──SOAP──▶ API Gateway ──▶ InboundLambda
+                                         │  publishes ScheduleEvent (JSON)
+                                         ▼
+                                       SQS Queue
+                                         │  triggers
+                                         ▼
+                                     SqsConsumerLambda
+                                         │  persists to PostgreSQL
+                                         │  publishes to SNS Topic
+                                         ▼
+                                     Subscribers
+    ```
+
+servers:
+  - url: "https://api.atheor.com"
+    description: Production (AWS API Gateway)
+  - url: "http://localhost:4566/restapis/{apiId}/local/_user_request_"
+    description: LocalStack
+    variables:
+      apiId:
+        default: "00000000"
+        description: API Gateway REST API ID assigned by LocalStack
+
+tags:
+  - name: Schedule
+    description: Operations related to schedule management
+
+paths:
+  /soap/schedule:
+    post:
+      tags:
+        - Schedule
+      summary: Submit a CreateSchedule SOAP request
+      operationId: createSchedule
+      parameters:
+        - name: SOAPAction
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "http://atheor.com/schedule/createSchedule"
+        - name: X-Correlation-Id
+          in: header
+          required: false
+          description: Optional client-supplied correlation ID (server generates one if absent)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          text/xml:
+            schema:
+              $ref: "#/components/schemas/SoapEnvelope"
+            example: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                             xmlns:tns="http://atheor.com/schedule">
+                <soap:Body>
+                  <tns:CreateScheduleRequest>
+                    <tns:scheduleId>SCH-2026-001</tns:scheduleId>
+                    <tns:scheduleName>Daily Batch Run</tns:scheduleName>
+                    <tns:startDate>2026-05-01</tns:startDate>
+                    <tns:endDate>2026-05-31</tns:endDate>
+                    <tns:operations>
+                      <tns:operation>
+                        <tns:operationId>OP-001</tns:operationId>
+                        <tns:operationName>Extract Data</tns:operationName>
+                        <tns:operationType>EXTRACT</tns:operationType>
+                        <tns:payload>{"source":"db1","table":"orders"}</tns:payload>
+                      </tns:operation>
+                    </tns:operations>
+                  </tns:CreateScheduleRequest>
+                </soap:Body>
+              </soap:Envelope>
+      responses:
+        "200":
+          description: Schedule accepted — queued for async processing
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: "text/xml; charset=utf-8"
+          content:
+            text/xml:
+              schema:
+                $ref: "#/components/schemas/SoapEnvelope"
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                  <soap:Body>
+                    <tns:CreateScheduleResponse xmlns:tns="http://atheor.com/schedule">
+                      <tns:scheduleId>SCH-2026-001</tns:scheduleId>
+                      <tns:status>CREATED</tns:status>
+                      <tns:correlationId>f47ac10b-58cc-4372-a567-0e02b2c3d479</tns:correlationId>
+                      <tns:message>Schedule received and queued for processing</tns:message>
+                    </tns:CreateScheduleResponse>
+                  </soap:Body>
+                </soap:Envelope>
+        "400":
+          description: Invalid SOAP request (malformed XML or missing Body element)
+          content:
+            text/xml:
+              schema:
+                $ref: "#/components/schemas/SoapFault"
+        "500":
+          description: Internal server error
+          content:
+            text/xml:
+              schema:
+                $ref: "#/components/schemas/SoapFault"
+
+components:
+  schemas:
+    SoapEnvelope:
+      type: string
+      description: A raw SOAP 1.1 XML envelope (text/xml)
+
+    SoapFault:
+      type: string
+      description: |
+        A SOAP 1.1 fault envelope, e.g.:
+        ```xml
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <soap:Fault>
+              <faultcode>soap:Client</faultcode>
+              <faultstring>Request body is empty</faultstring>
+            </soap:Fault>
+          </soap:Body>
+        </soap:Envelope>
+        ```

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:tns="http://atheor.com/schedule">
+  <soap:Body>
+    <tns:CreateScheduleRequest>
+      <tns:scheduleId>SCH-2026-001</tns:scheduleId>
+      <tns:scheduleName>Daily Batch Run</tns:scheduleName>
+      <tns:startDate>2026-05-01</tns:startDate>
+      <tns:endDate>2026-05-31</tns:endDate>
+      <tns:operations>
+        <tns:operation>
+          <tns:operationId>OP-001</tns:operationId>
+          <tns:operationName>Extract Orders</tns:operationName>
+          <tns:operationType>EXTRACT</tns:operationType>
+          <tns:payload>{"source":"db1","table":"orders"}</tns:payload>
+        </tns:operation>
+        <tns:operation>
+          <tns:operationId>OP-002</tns:operationId>
+          <tns:operationName>Transform Data</tns:operationName>
+          <tns:operationType>TRANSFORM</tns:operationType>
+        </tns:operation>
+      </tns:operations>
+    </tns:CreateScheduleRequest>
+  </soap:Body>
+</soap:Envelope>

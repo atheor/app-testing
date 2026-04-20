@@ -1,0 +1,68 @@
+version: "3.9"
+
+# =============================================================
+# Local AWS simulation (LocalStack) + PostgreSQL backend
+# =============================================================
+# Usage:
+#   docker compose up -d           # start all services
+#   docker compose logs -f         # follow logs
+#   docker compose down -v         # tear down (removes volumes)
+# =============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # LocalStack — emulates AWS services locally
+  # -----------------------------------------------------------
+  localstack:
+    image: localstack/localstack:3.4
+    container_name: localstack
+    ports:
+      - "4566:4566"        # unified gateway
+      - "4510-4559:4510-4559"  # legacy service ports (optional)
+    environment:
+      - SERVICES=apigateway,lambda,sqs,sns,iam,sts,logs
+      - DEBUG=0
+      - LAMBDA_EXECUTOR=local
+      - LAMBDA_REMOVE_CONTAINERS=true
+      - PERSISTENCE=0
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # -----------------------------------------------------------
+  # PostgreSQL 16 — persistent backend database
+  # -----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: atheor
+      POSTGRES_USER: atheor
+      POSTGRES_PASSWORD: atheor123
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atheor -d atheor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  localstack-data:
+  postgres-data:
+
+networks:
+  default:
+    name: atheor-network

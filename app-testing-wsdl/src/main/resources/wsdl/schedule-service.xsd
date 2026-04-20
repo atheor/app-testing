@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://atheor.com/schedule"
+           targetNamespace="http://atheor.com/schedule"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <!-- Root elements -->
+    <xs:element name="CreateScheduleRequest"  type="tns:CreateScheduleRequestType"/>
+    <xs:element name="CreateScheduleResponse" type="tns:CreateScheduleResponseType"/>
+
+    <!-- ============================== -->
+    <!-- Request type                   -->
+    <!-- ============================== -->
+    <xs:complexType name="CreateScheduleRequestType">
+        <xs:sequence>
+            <xs:element name="scheduleId"   type="xs:string"/>
+            <xs:element name="scheduleName" type="xs:string"/>
+            <xs:element name="startDate"    type="xs:string"/>
+            <xs:element name="endDate"      type="xs:string"/>
+            <xs:element name="operations"   type="tns:OperationListType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OperationListType">
+        <xs:sequence>
+            <xs:element name="operation" type="tns:OperationType"
+                        minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OperationType">
+        <xs:sequence>
+            <xs:element name="operationId"   type="xs:string"/>
+            <xs:element name="operationName" type="xs:string"/>
+            <xs:element name="operationType" type="xs:string"/>
+            <xs:element name="payload"       type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- ============================== -->
+    <!-- Response type                  -->
+    <!-- ============================== -->
+    <xs:complexType name="CreateScheduleResponseType">
+        <xs:sequence>
+            <xs:element name="scheduleId"     type="xs:string"/>
+            <xs:element name="status"         type="xs:string"/>
+            <xs:element name="message"        type="xs:string" minOccurs="0"/>
+            <xs:element name="correlationId"  type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
