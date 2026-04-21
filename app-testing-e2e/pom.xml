@@ -14,7 +14,7 @@
     <artifactId>app-testing-e2e</artifactId>
     <packaging>jar</packaging>
     <name>app-testing-e2e</name>
-    <description>End-to-end tests — SauceDemo (Selenium) and CountryInfoService (SOAP + contract)</description>
+    <description>End-to-end tests — Inbound Lambda SOAP endpoint (CreateSchedule) and SauceDemo (Selenium UI)</description>
 
     <dependencies>
         <!-- Framework module -->

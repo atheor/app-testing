@@ -1,18 +1,3 @@
-variable "environment"            { type = string }
-variable "aws_region"             { type = string }
-variable "localstack_endpoint"    { type = string }
-variable "lambda_runtime"         { type = string }
-variable "lambda_memory_mb"       { type = number }
-variable "lambda_timeout_seconds" { type = number }
-variable "inbound_lambda_jar"     { type = string }
-variable "processor_lambda_jar"   { type = string }
-variable "sqs_queue_url"          { type = string }
-variable "sqs_queue_arn"          { type = string }
-variable "sns_topic_arn"          { type = string }
-variable "db_url"                 { type = string }
-variable "db_username"            { type = string; sensitive = true }
-variable "db_password"            { type = string; sensitive = true }
-
 # ------------------------------------------------------------------
 # IAM — shared execution role for both Lambda functions
 # ------------------------------------------------------------------
@@ -92,7 +77,7 @@ resource "aws_lambda_function" "inbound" {
     variables = {
       AWS_REGION      = var.aws_region
       SQS_QUEUE_URL   = var.sqs_queue_url
-      SQS_ENDPOINT    = var.localstack_endpoint
+      SQS_ENDPOINT    = var.lambda_aws_endpoint
     }
   }
 
@@ -121,7 +106,7 @@ resource "aws_lambda_function" "processor" {
     variables = {
       AWS_REGION    = var.aws_region
       SNS_TOPIC_ARN = var.sns_topic_arn
-      SNS_ENDPOINT  = var.localstack_endpoint
+      SNS_ENDPOINT  = var.lambda_aws_endpoint
       DB_URL        = var.db_url
       DB_USERNAME   = var.db_username
       DB_PASSWORD   = var.db_password

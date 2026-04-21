@@ -23,7 +23,7 @@ public final class AwsClientConfig {
         String region      = System.getenv().getOrDefault(AppConstants.ENV_AWS_REGION, AppConstants.DEFAULT_REGION);
         String sqsEndpoint = System.getenv(AppConstants.ENV_SQS_ENDPOINT);
 
-        SqsClient.Builder builder = SqsClient.builder()
+        var builder = SqsClient.builder()
                 .region(Region.of(region))
                 .credentialsProvider(EnvironmentVariableCredentialsProvider.create());
 

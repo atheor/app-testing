@@ -1,88 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                  xmlns:tms="http://microsoft.com/wsdl/mime/textMatchingService"
-                  xmlns:soapenc="http://schemas.xmlsoap.org/wsdl/soap/encoding/"
-                  xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
-                  xmlns:tns="urn:wpm"
+                  xmlns:tns="http://atheor.com/schedule"
                   xmlns:s="http://www.w3.org/2001/XMLSchema"
-                  xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
-                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
-                  targetNamespace="urn:wpm"
-                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  targetNamespace="http://atheor.com/schedule">
 
     <!-- ================================================================
          Types
          ================================================================ -->
     <wsdl:types>
-        <s:schema elementFormDefault="qualified" targetNamespace="urn:wpm">
+        <s:schema elementFormDefault="qualified" targetNamespace="http://atheor.com/schedule">
 
-            <!-- Complex type definitions -->
-
-            <s:complexType name="CreateScheduleWpmTc">
+            <!-- ---- Request ---- -->
+            <s:complexType name="CreateScheduleRequestType">
                 <s:sequence>
+                    <s:element minOccurs="1" maxOccurs="1" name="scheduleId"   type="s:string"/>
                     <s:element minOccurs="1" maxOccurs="1" name="scheduleName" type="s:string"/>
-                    <s:element minOccurs="1" maxOccurs="1" name="startDate"    type="s:dateTime"/>
-                    <s:element minOccurs="1" maxOccurs="1" name="endDate"      type="s:dateTime"/>
+                    <s:element minOccurs="1" maxOccurs="1" name="startDate"    type="s:string"/>
+                    <s:element minOccurs="1" maxOccurs="1" name="endDate"      type="s:string"/>
+                    <s:element minOccurs="0" maxOccurs="1" name="operations"   type="tns:OperationListType"/>
                 </s:sequence>
             </s:complexType>
 
-            <s:complexType name="CreateScheduleResponseTc">
-                <s:sequence>
-                    <s:element minOccurs="1" maxOccurs="1" name="scheduleId" type="s:string"/>
-                    <s:element minOccurs="1" maxOccurs="1" name="status"     type="s:string"/>
-                    <s:element minOccurs="0" maxOccurs="1" name="message"    type="s:string"/>
-                </s:sequence>
-            </s:complexType>
-
-            <s:complexType name="CreateOperationWpmTc">
+            <!-- ---- Response ---- -->
+            <s:complexType name="CreateScheduleResponseType">
                 <s:sequence>
                     <s:element minOccurs="1" maxOccurs="1" name="scheduleId"    type="s:string"/>
-                    <s:element minOccurs="1" maxOccurs="1" name="operationName" type="s:string"/>
-                    <s:element minOccurs="1" maxOccurs="1" name="deviceId"      type="s:string"/>
+                    <s:element minOccurs="1" maxOccurs="1" name="status"        type="s:string"/>
+                    <s:element minOccurs="0" maxOccurs="1" name="message"       type="s:string"/>
+                    <s:element minOccurs="0" maxOccurs="1" name="correlationId" type="s:string"/>
                 </s:sequence>
             </s:complexType>
 
-            <s:complexType name="CreateOperationResponseTc">
+            <!-- ---- Operations list (optional, embedded in request) ---- -->
+            <s:complexType name="OperationListType">
                 <s:sequence>
-                    <s:element minOccurs="1" maxOccurs="1" name="operationId" type="s:string"/>
-                    <s:element minOccurs="1" maxOccurs="1" name="status"      type="s:string"/>
-                    <s:element minOccurs="0" maxOccurs="1" name="message"     type="s:string"/>
+                    <s:element minOccurs="0" maxOccurs="unbounded" name="operation" type="tns:OperationType"/>
                 </s:sequence>
             </s:complexType>
 
-            <!-- Request / Response elements -->
+            <s:complexType name="OperationType">
+                <s:sequence>
+                    <s:element minOccurs="1" maxOccurs="1" name="operationId"   type="s:string"/>
+                    <s:element minOccurs="1" maxOccurs="1" name="operationName" type="s:string"/>
+                    <s:element minOccurs="1" maxOccurs="1" name="operationType" type="s:string"/>
+                    <s:element minOccurs="0" maxOccurs="1" name="payload"       type="s:string"/>
+                </s:sequence>
+            </s:complexType>
 
-            <s:element name="CreateSchedule">
-                <s:complexType>
-                    <s:sequence>
-                        <s:element minOccurs="1" name="CreateScheduleTc" type="tns:CreateScheduleWpmTc"/>
-                    </s:sequence>
-                </s:complexType>
-            </s:element>
-
-            <s:element name="CreateScheduleResponse">
-                <s:complexType>
-                    <s:sequence>
-                        <s:element minOccurs="1" name="CreateScheduleResult" type="tns:CreateScheduleResponseTc"/>
-                    </s:sequence>
-                </s:complexType>
-            </s:element>
-
-            <s:element name="CreateOperation">
-                <s:complexType>
-                    <s:sequence>
-                        <s:element minOccurs="1" name="CreateOperationTc" type="tns:CreateOperationWpmTc"/>
-                    </s:sequence>
-                </s:complexType>
-            </s:element>
-
-            <s:element name="CreateOperationResponse">
-                <s:complexType>
-                    <s:sequence>
-                        <s:element minOccurs="1" name="CreateOperationResult" type="tns:CreateOperationResponseTc"/>
-                    </s:sequence>
-                </s:complexType>
-            </s:element>
+            <!-- ---- Root elements ---- -->
+            <s:element name="CreateScheduleRequest"  type="tns:CreateScheduleRequestType"/>
+            <s:element name="CreateScheduleResponse" type="tns:CreateScheduleResponseType"/>
 
         </s:schema>
     </wsdl:types>
@@ -90,58 +58,31 @@
     <!-- ================================================================
          Messages
          ================================================================ -->
-
     <wsdl:message name="CreateScheduleSoapIn">
-        <wsdl:part name="parameters" element="tns:CreateSchedule"/>
+        <wsdl:part name="parameters" element="tns:CreateScheduleRequest"/>
     </wsdl:message>
     <wsdl:message name="CreateScheduleSoapOut">
         <wsdl:part name="parameters" element="tns:CreateScheduleResponse"/>
     </wsdl:message>
 
-    <wsdl:message name="CreateOperationSoapIn">
-        <wsdl:part name="parameters" element="tns:CreateOperation"/>
-    </wsdl:message>
-    <wsdl:message name="CreateOperationSoapOut">
-        <wsdl:part name="parameters" element="tns:CreateOperationResponse"/>
-    </wsdl:message>
-
     <!-- ================================================================
          Port Type
          ================================================================ -->
-
     <wsdl:portType name="InboundServiceSoap">
-
         <wsdl:operation name="CreateSchedule">
             <wsdl:input  message="tns:CreateScheduleSoapIn"/>
             <wsdl:output message="tns:CreateScheduleSoapOut"/>
         </wsdl:operation>
-
-        <wsdl:operation name="CreateOperation">
-            <wsdl:input  message="tns:CreateOperationSoapIn"/>
-            <wsdl:output message="tns:CreateOperationSoapOut"/>
-        </wsdl:operation>
-
     </wsdl:portType>
 
     <!-- ================================================================
          Binding  (SOAP 1.1 · document/literal)
          ================================================================ -->
-
-    <wsdl:binding name="InboundServiceSoap" type="tns:InboundServiceSoap">
+    <wsdl:binding name="InboundServiceSoapBinding" type="tns:InboundServiceSoap">
         <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
 
         <wsdl:operation name="CreateSchedule">
-            <soap:operation soapAction="wpm/CreateSchedule" style="document"/>
-            <wsdl:input>
-                <soap:body use="literal"/>
-            </wsdl:input>
-            <wsdl:output>
-                <soap:body use="literal"/>
-            </wsdl:output>
-        </wsdl:operation>
-
-        <wsdl:operation name="CreateOperation">
-            <soap:operation soapAction="wpm/CreateOperation" style="document"/>
+            <soap:operation soapAction="http://atheor.com/schedule/createSchedule" style="document"/>
             <wsdl:input>
                 <soap:body use="literal"/>
             </wsdl:input>
@@ -153,12 +94,11 @@
     </wsdl:binding>
 
     <!-- ================================================================
-         Service
+         Service  (placeholder path — actual URL from terraform output)
          ================================================================ -->
-
     <wsdl:service name="InboundService">
-        <wsdl:port name="InboundServiceSoap" binding="tns:InboundServiceSoap">
-            <soap:address location="http://your-adms-host/AdmsService"/>
+        <wsdl:port name="InboundServiceSoap" binding="tns:InboundServiceSoapBinding">
+            <soap:address location="https://your-api-gateway-endpoint/soap/schedule"/>
         </wsdl:port>
     </wsdl:service>
 

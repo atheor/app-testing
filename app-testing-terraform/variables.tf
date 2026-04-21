@@ -11,9 +11,15 @@ variable "environment" {
 }
 
 variable "localstack_endpoint" {
-  description = "LocalStack unified endpoint URL"
+  description = "LocalStack unified endpoint URL (host-side, used by Terraform provider)"
   type        = string
   default     = "http://localhost:4566"
+}
+
+variable "lambda_aws_endpoint" {
+  description = "LocalStack endpoint URL as seen from inside a Lambda Docker container"
+  type        = string
+  default     = "http://host.docker.internal:4566"
 }
 
 # ------------------------------------------------------------------

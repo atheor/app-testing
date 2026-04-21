@@ -59,6 +59,7 @@ module "lambda" {
   environment            = var.environment
   aws_region             = var.aws_region
   localstack_endpoint    = var.localstack_endpoint
+  lambda_aws_endpoint    = var.lambda_aws_endpoint
   lambda_runtime         = var.lambda_runtime
   lambda_memory_mb       = var.lambda_memory_mb
   lambda_timeout_seconds = var.lambda_timeout_seconds

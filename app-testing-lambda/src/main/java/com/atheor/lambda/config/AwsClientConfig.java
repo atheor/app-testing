@@ -24,7 +24,7 @@ public class AwsClientConfig {
         String region      = System.getenv().getOrDefault(AppConstants.ENV_AWS_REGION, AppConstants.DEFAULT_REGION);
         String snsEndpoint = System.getenv(AppConstants.ENV_SNS_ENDPOINT);
 
-        SnsClient.Builder builder = SnsClient.builder()
+        var builder = SnsClient.builder()
                 .region(Region.of(region))
                 .credentialsProvider(EnvironmentVariableCredentialsProvider.create());
 

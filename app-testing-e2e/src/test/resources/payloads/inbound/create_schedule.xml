@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SOAP 1.1 envelope template for the CreateSchedule operation.
+    All ${token} placeholders are replaced at runtime by PayloadFileLoader.
+
+    Required tokens:
+      ${scheduleId}   - Client-assigned UUID for the schedule
+      ${scheduleName} - Human-readable name for the new schedule
+      ${startDate}    - ISO-8601 start datetime, e.g. 2026-04-21T08:00:00
+      ${endDate}      - ISO-8601 end datetime, e.g. 2026-04-21T10:00:00
+
+    Namespace: http://atheor.com/schedule
+    SOAPAction: http://atheor.com/schedule/createSchedule
+    Endpoint:   POST /soap/schedule
+-->
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:tns="http://atheor.com/schedule">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <tns:CreateScheduleRequest>
+            <tns:scheduleId>${scheduleId}</tns:scheduleId>
+            <tns:scheduleName>${scheduleName}</tns:scheduleName>
+            <tns:startDate>${startDate}</tns:startDate>
+            <tns:endDate>${endDate}</tns:endDate>
+        </tns:CreateScheduleRequest>
+    </soapenv:Body>
+</soapenv:Envelope>

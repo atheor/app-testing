@@ -35,14 +35,14 @@ mvn package -DskipTests
 ### Run a specific test class
 
 ```bash
-mvn test -pl app-testing-e2e -Dtest=InboundCreateScheduleCreateOperationTest
+mvn test -pl app-testing-e2e -Dtest=InboundCreateScheduleTest
 ```
 
 ### Run a specific test method
 
 ```bash
 mvn test -pl app-testing-e2e \
-  -Dtest="InboundCreateScheduleCreateOperationTest#shouldCreateScheduleThenCreateOperation"
+  -Dtest="InboundCreateScheduleTest#shouldCreateScheduleAndReceiveCreatedStatus"
 ```
 
 ---
@@ -55,9 +55,7 @@ Test properties live in `app-testing-e2e/src/test/resources/test.properties`. Va
 
 ```bash
 mvn test -pl app-testing-e2e \
-  -Dadms.endpoint=http://localhost:4566/restapis/XXXXXXXX/local/_user_request_/soap/schedule \
-  -Dadms.username=test \
-  -Dadms.password=test
+  -Dinbound.endpoint=$(cd app-testing-terraform && terraform output -raw api_gateway_endpoint)
 ```
 
 All configurable properties:
@@ -70,17 +68,15 @@ All configurable properties:
 | `saucedemo.base.url` | `https://www.saucedemo.com` | SauceDemo URL |
 | `saucedemo.username` | `standard_user` | SauceDemo login |
 | `saucedemo.password` | `secret_sauce` | SauceDemo password |
-| `adms.endpoint` | _(blank)_ | SOAP endpoint URL — required for SOAP tests |
-| `adms.username` | _(blank)_ | SOAP auth username |
-| `adms.password` | _(blank)_ | SOAP auth password |
+| `inbound.endpoint` | _(required — no default)_ | Full API Gateway URL including `/soap/schedule` path. For LocalStack use `terraform output -raw api_gateway_endpoint`. Tests are **skipped** (not failed) when this is unset. |
 
-> Tests with missing or placeholder `adms.endpoint` are **skipped** automatically via `Assumptions.assumeTrue(...)`, not failed.
+> Tests with a missing or placeholder `inbound.endpoint` are **skipped** automatically via `Assumptions.assumeTrue(...)`, not failed.
 
 ---
 
-### SOAP E2E Test — `InboundCreateScheduleCreateOperationTest`
+### SOAP E2E Test — `InboundCreateScheduleTest`
 
-**Purpose:** Sends a real `CreateSchedule` SOAP request end-to-end and asserts the response contains a non-blank `scheduleId` and `operationId`.
+**Purpose:** Sends a real `CreateSchedule` SOAP request end-to-end through API Gateway → Lambda → SQS and asserts the synchronous response contains a non-blank `scheduleId`, `status=CREATED`, and a non-blank `correlationId`.
 
 **Requires:** The full local stack running (LocalStack + Terraform applied). See [Local Setup](local-setup.md).
 
@@ -93,22 +89,22 @@ ENDPOINT=$(terraform output -raw api_gateway_endpoint)
 cd ..
 
 mvn test -pl app-testing-e2e \
-  -Dtest=InboundCreateScheduleCreateOperationTest \
-  -Dadms.endpoint="${ENDPOINT}"
+  -Dtest=InboundCreateScheduleTest \
+  -Dinbound.endpoint="${ENDPOINT}"
 ```
 
 **Run against AWS:**
 
 ```bash
 mvn test -pl app-testing-e2e \
-  -Dtest=InboundCreateScheduleCreateOperationTest \
-  -Dadms.endpoint="https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/v1/soap/schedule"
+  -Dtest=InboundCreateScheduleTest \
+  -Dinbound.endpoint="https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod/soap/schedule"
 ```
 
 **Flow exercised:**
-1. `InboundSoapServiceClient` sends SOAP `CreateScheduleRequest` to the endpoint
-2. `CreateScheduleOperationWorkflow` parses the SOAP response
-3. Assertions confirm `scheduleId` and `operationId` are non-blank
+1. `CreateScheduleWorkflow` generates a UUID `scheduleId` and builds the SOAP envelope from `payloads/inbound/create_schedule.xml`
+2. `InboundSoapServiceClient` POSTs to the endpoint with `Content-Type: text/xml` and `SOAPAction: http://atheor.com/schedule/createSchedule`
+3. Assertions confirm `scheduleId` is echoed back, `status=CREATED`, and `correlationId` is non-blank
 
 ---
 
@@ -131,10 +127,20 @@ mvn test -pl app-testing-e2e -Dtest=SauceDemoLoginTest -Dbrowser.headless=true
 
 ## Testing the SOAP Layer Manually
 
+> **LocalStack endpoint format:** LocalStack v3 exposes API Gateway via the execute-api domain,
+> **not** the legacy `/restapis/<id>/local/_user_request_/` path.
+> Always resolve the endpoint from Terraform:
+> ```bash
+> cd app-testing-terraform
+> export ENDPOINT=$(terraform output -raw api_gateway_endpoint)
+> # e.g. http://<id>.execute-api.localhost.localstack.cloud:4566/v1/soap/schedule
+> cd ..
+> ```
+
 ### Using `curl`
 
 ```bash
-curl -s -X POST "http://localhost:4566/restapis/XXXXXXXX/local/_user_request_/soap/schedule" \
+curl -s -X POST "${ENDPOINT}" \
   -H "Content-Type: text/xml; charset=utf-8" \
   -H "SOAPAction: http://atheor.com/schedule/createSchedule" \
   -d '<?xml version="1.0" encoding="UTF-8"?>
@@ -161,18 +167,18 @@ curl -s -X POST "http://localhost:4566/restapis/XXXXXXXX/local/_user_request_/so
 ### Using Postman
 
 1. Create a new **POST** request
-2. URL: `<ENDPOINT>/soap/schedule`
+2. URL: value of `$ENDPOINT` (from `terraform output -raw api_gateway_endpoint`)
 3. Headers:
    - `Content-Type`: `text/xml; charset=utf-8`
    - `SOAPAction`: `http://atheor.com/schedule/createSchedule`
 4. Body → **raw** → **XML**
 5. Paste the SOAP envelope from `app-testing-terraform/scripts/sample-request.xml`
 
-### Using SoapUI
+> **Note:** For LocalStack, the URL uses the `localhost.localstack.cloud` domain (e.g. `http://<id>.execute-api.localhost.localstack.cloud:4566/v1/soap/schedule`), not the old `/restapis/` path. The `terraform output` value is always correct.
 
 1. New SOAP project → WSDL URL → point to `app-testing-wsdl/src/main/resources/wsdl/schedule-service.wsdl`
 2. SoapUI auto-generates a sample request
-3. Set the endpoint override to `<ENDPOINT>/soap/schedule`
+3. Set the **endpoint override** to the value of `$ENDPOINT` (from `terraform output -raw api_gateway_endpoint`) — do **not** use the prod URL embedded in the WSDL's `<soap:address>` element
 4. Click ▶ Send
 
 ---
