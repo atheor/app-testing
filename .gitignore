@@ -1,5 +1,44 @@
+# -------------------------------------------------------
+# Java / Maven
+# -------------------------------------------------------
 target/
 *.class
+*.jar
+*.war
 *.iml
 .idea/
 .DS_Store
+
+# -------------------------------------------------------
+# Terraform — local state, provider binaries, overrides
+# -------------------------------------------------------
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform variable files may contain secrets — exclude by default.
+# Commit terraform.tfvars.example instead if you want to document the shape.
+terraform.tfvars
+*.auto.tfvars
+
+# Terraform plan output
+*.tfplan
+
+# -------------------------------------------------------
+# Docker / LocalStack
+# -------------------------------------------------------
+localstack-data/
+.localstack/
+
+# -------------------------------------------------------
+# Logs
+# -------------------------------------------------------
+*.log
+logs/
